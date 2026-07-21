@@ -526,6 +526,10 @@ TEMPLATE_PRODUCT_TEST_CASE("MultAdd","[matrix_tests]",
     if (std::is_same_v<MAT,TPZFYsmpMatrixMumps<SCAL>> || std::is_same_v<MAT,TPZSYsmpMatrixMumps<SCAL>>)
       return;
 #endif
+#ifdef PZ_USING_ACCELERATE
+    if (std::is_same_v<MAT,TPZFYsmpMatrixAccelerate<SCAL>> || std::is_same_v<MAT,TPZSYsmpMatrixAccelerate<SCAL>>)
+      return;
+#endif
     if (std::is_same_v<MAT,TPZFYsmpMatrix<SCAL>> || std::is_same_v<MAT,TPZSYsmpMatrix<SCAL>>)
       return;
     y.AutoFill(nr,1,SymProp::NonSym);

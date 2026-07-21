@@ -92,9 +92,11 @@ set(sources
 	endif()
   if(APPLE AND NOT USING_MKL)
     list(APPEND headers
+      TPZYSMPAccelerate.h
       TPZSYSMPAccelerate.h
     )
     list(APPEND sources
+      TPZYSMPAccelerate.cpp
       TPZSYSMPAccelerate.cpp
       )
   endif()

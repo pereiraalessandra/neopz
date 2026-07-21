@@ -90,6 +90,14 @@ set(sources
 			TPZEigenSparseMatrix.cpp			
 		)
 	endif()
+  if(APPLE AND NOT USING_MKL)
+    list(APPEND headers
+      TPZSYSMPAccelerate.h
+    )
+    list(APPEND sources
+      TPZSYSMPAccelerate.cpp
+      )
+  endif()
 install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Matrix)
 
 target_sources(pz PRIVATE ${headers} ${sources})

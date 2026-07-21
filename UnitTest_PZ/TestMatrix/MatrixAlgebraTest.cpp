@@ -316,6 +316,10 @@ TEMPLATE_PRODUCT_TEST_CASE("MultiplyByScalar", "[matrix_tests]",
                             TPZFYsmpMatrixMumps,
                             TPZSYsmpMatrixMumps,
 #endif
+#ifdef PZ_USING_ACCELERATE
+                            TPZFYsmpMatrixAccelerate,
+                            TPZSYsmpMatrixAccelerate,
+#endif
                             TPZSkylMatrix),
                            (float, double, long double,
                             std::complex<float>, std::complex<double>,
@@ -388,6 +392,10 @@ TEMPLATE_PRODUCT_TEST_CASE("Multiply", "[matrix_tests]",
 #ifdef PZ_USING_MUMPS
                             TPZFYsmpMatrixMumps,
                             TPZSYsmpMatrixMumps,
+#endif
+#ifdef PZ_USING_ACCELERATE
+                            TPZFYsmpMatrixAccelerate,
+                            TPZSYsmpMatrixAccelerate,
 #endif
                             TPZSkylMatrix),
                            (float, double, long double,
@@ -470,6 +478,10 @@ TEMPLATE_PRODUCT_TEST_CASE("MultAdd","[matrix_tests]",
 #ifdef PZ_USING_MUMPS
                              ,TPZFYsmpMatrixMumps,
                              TPZSYsmpMatrixMumps
+#endif
+#ifdef PZ_USING_ACCELERATE
+                             ,TPZFYsmpMatrixAccelerate,
+                             TPZSYsmpMatrixAccelerate
 #endif
                             ),
                            (

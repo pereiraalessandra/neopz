@@ -185,6 +185,7 @@ else()
         # Mac OS X specific code
         find_library(ACCELERATE_LIB Accelerate)
         target_link_libraries(pz PRIVATE ${ACCELERATE_LIB})
+        target_compile_definitions(pz INTERFACE PZ_USING_ACCELERATE)
     ENDIF(APPLE)
 endif(USING_MKL)
 

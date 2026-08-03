@@ -1,0 +1,21 @@
+function(enable_Pybind11)
+    if(NOT TARGET pybind11::module)
+        find_package(pybind11 CONFIG QUIET)
+        if(NOT TARGET pybind11::module)
+            Include(FetchContent)
+            if(NOT pybind11_SOURCE_DIR)
+                message(STATUS "Downloading pybind11")
+            endif()
+            FetchContent_Declare(
+                Pybind11
+                GIT_REPOSITORY https://github.com/pybind/pybind11.git
+                GIT_TAG        v2.10.0)
+            FetchContent_MakeAvailable(Pybind11)
+        endif()
+    endif()
+    if(TARGET pybind11::module)
+        message(STATUS "pybind11 found at ${pybind11_SOURCE_DIR}")
+    else()
+        message(FATAL_ERROR "Could not satisfy dependency: pybind11")
+    endif()
+endfunction()

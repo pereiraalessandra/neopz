@@ -110,6 +110,13 @@ if(BUILD_UNITTESTING)
   enable_catch2()
 endif()
 
+#To enable pybind11 bindings for python
+option(BUILD_PYBIND11_BINDINGS "Whether the pybind11 will be linked in" OFF)
+if(BUILD_PYBIND11_BINDINGS)
+  include(cmake/EnablePybind11.cmake)
+  enable_Pybind11()
+  add_subdirectory(Pybind11)
+endif()
 
 #enabling Boost library
 option(USING_BOOST "Whether the Boost package will be linked with the library" OFF)

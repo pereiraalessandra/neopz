@@ -1,0 +1,8 @@
+# Running anything from this directory drops NeoPZ debug dumps, VTK output and
+# __pycache__ here. Listing them by name rots, so only source is tracked.
+*
+!.gitignore
+!CMakeLists.txt
+!*.cpp
+!*.h
+!*.py

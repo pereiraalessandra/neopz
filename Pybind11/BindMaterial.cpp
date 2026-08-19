@@ -1,70 +1,58 @@
 /// @file BindMaterial.cpp
-/// @brief Bindings for the material interfaces and concrete materials (Material/)
+/// @brief Bindings for the material interfaces shared by every concrete
+/// material (Material/TPZMaterial.h, TPZBndCond.h, TPZBndCondT.h). Concrete
+/// materials live in one file per physics family: BindMaterialDarcy.cpp,
+/// BindMaterialElasticity.cpp, ...
 /// @note materials inserted into a mesh are deleted by TPZCompMesh::CleanUp,
-/// hence the py::nodelete holder. TPZBndCond is a sibling of TPZMaterial, not
-/// derived from it, which is why InsertMaterialObject is overloaded on both
+/// hence the py::nodelete holder used throughout those files. TPZBndCond is a
+/// sibling of TPZMaterial, not derived from it, which is why
+/// InsertMaterialObject is overloaded on both
 
 #include "Bindings.h"
+#include "PybindCallbacks.h"
 
-#include "TPZMaterial.h"
+#include "TPZAnalyticSolution.h"
 #include "TPZBndCond.h"
 #include "TPZBndCondT.h"
-#include "pzfmatrix.h"
-#include "DarcyFlow/TPZDarcyFlow.h"
-#include "DarcyFlow/TPZMixedDarcyFlow.h"
+#include "TPZMaterial.h"
 
-namespace
-{
-    template <class TMaterial>
-    TPZBndCond *CreateBoundaryCondition(TMaterial &material, int id, int type,
-                                        const TPZFMatrix<STATE> &val1,
-                                        const TPZVec<STATE> &val2)
-    {
-        return material.CreateBC(&material, id, type, val1, val2);
-    }
+namespace {
+/// ForcingFunctionBCType has the same (loc, result, deriv) shape as
+/// ExactSolType, so MakeExactSolution is reused unchanged.
+void SetForcingFunctionBCCallback(TPZBndCondT<STATE> &bc, py::function f, int pOrder) {
+  bc.SetForcingFunctionBC(MakeExactSolution<STATE>(f), pOrder);
+}
 
-    /// TPZIsotropicPermeability is a virtual base: no pointer to member
-    template <class TMaterial>
-    void SetConstantPermeability(TMaterial &material, STATE permeability)
-    {
-        material.SetConstantPermeability(permeability);
-    }
+template <class TAnalytic>
+void SetForcingFunctionBCAnalytic(TPZBndCondT<STATE> &bc, TAnalytic &analytic, int pOrder) {
+  bc.SetForcingFunctionBC(analytic.ExactSolution(), pOrder);
+}
 } // namespace
 
-void InitMaterial(py::module_ &m)
-{
-    py::class_<TPZMaterial>(m, "TPZMaterial", "Interface of every NeoPZ material.")
-        .def("Id", &TPZMaterial::Id)
-        .def("NStateVariables", &TPZMaterial::NStateVariables)
-        .def("Dimension", &TPZMaterial::Dimension)
-        .def("__str__", [](const TPZMaterial &material)
-             { return PrintToString(material); });
+void InitMaterial(py::module_ &m) {
+  py::class_<TPZMaterial>(m, "TPZMaterial", "Interface of every NeoPZ material.")
+      .def("Id", &TPZMaterial::Id)
+      .def("NStateVariables", &TPZMaterial::NStateVariables)
+      .def("Dimension", &TPZMaterial::Dimension)
+      .def("HasForcingFunction", &TPZMaterial::HasForcingFunction)
+      .def("__str__", [](const TPZMaterial &material) { return PrintToString(material); });
 
-    py::class_<TPZBndCond>(m, "TPZBndCond",
-                           "Type agnostic interface of a boundary condition.")
-        .def("Id", &TPZBndCond::Id)
-        .def("Type", &TPZBndCond::Type, "0 is Dirichlet, 1 is Neumann.")
-        .def("__str__", [](const TPZBndCond &bndcond)
-             { return PrintToString(bndcond); });
+  py::class_<TPZBndCond>(m, "TPZBndCond", "Type agnostic interface of a boundary condition.")
+      .def("Id", &TPZBndCond::Id)
+      .def("Type", &TPZBndCond::Type, "0 is Dirichlet, 1 is Neumann.")
+      .def("__str__", [](const TPZBndCond &bndcond) { return PrintToString(bndcond); });
 
-    py::class_<TPZDarcyFlow, TPZMaterial,
-               std::unique_ptr<TPZDarcyFlow, py::nodelete>>(
-        m, "TPZDarcyFlow", "Darcy material for a single H1 space.")
-        .def(py::init<int, int>(), py::arg("id"), py::arg("dim"))
-        .def("SetConstantPermeability", &SetConstantPermeability<TPZDarcyFlow>,
-             py::arg("permeability"))
-        .def("CreateBC", &CreateBoundaryCondition<TPZDarcyFlow>,
-             py::arg("id"), py::arg("type"), py::arg("val1"), py::arg("val2"),
-             py::return_value_policy::reference, py::keep_alive<0, 1>());
-
-    py::class_<TPZMixedDarcyFlow, TPZMaterial,
-               std::unique_ptr<TPZMixedDarcyFlow, py::nodelete>>(
-        m, "TPZMixedDarcyFlow",
-        "Darcy material for combined spaces (HDiv flux, L2 pressure).")
-        .def(py::init<int, int>(), py::arg("id"), py::arg("dim"))
-        .def("SetConstantPermeability", &SetConstantPermeability<TPZMixedDarcyFlow>,
-             py::arg("permeability"))
-        .def("CreateBC", &CreateBoundaryCondition<TPZMixedDarcyFlow>,
-             py::arg("id"), py::arg("type"), py::arg("val1"), py::arg("val2"),
-             py::return_value_policy::reference, py::keep_alive<0, 1>());
+  // What CreateBC actually returns at runtime: pybind resolves the dynamic
+  // type via RTTI, so this class need not be named explicitly at the call
+  // site for its methods to become available on the returned object.
+  py::class_<TPZBndCondT<STATE>, TPZBndCond>(
+      m, "TPZBndCondT", "Boundary condition with a concrete state type.")
+      .def("SetForcingFunctionBC", &SetForcingFunctionBCCallback, py::arg("f"), py::arg("pOrder") = 1, "Position-dependent boundary values, needed whenever the exact "
+                                                                                                       "solution is not constant. "
+                                                                                                       "f(loc: list[float]) -> tuple[list[float], list[list[float]]]")
+      .def("SetForcingFunctionBC", &SetForcingFunctionBCAnalytic<TLaplaceExample1>, py::arg("analytic"), py::arg("pOrder") = 1, py::keep_alive<1, 2>())
+      .def("SetForcingFunctionBC", &SetForcingFunctionBCAnalytic<TElasticity2DAnalytic>, py::arg("analytic"), py::arg("pOrder") = 1, py::keep_alive<1, 2>())
+      .def("SetForcingFunctionBC", &SetForcingFunctionBCAnalytic<TElasticity3DAnalytic>, py::arg("analytic"), py::arg("pOrder") = 1, py::keep_alive<1, 2>())
+      .def("Val1", &TPZBndCondT<STATE>::Val1)
+      .def("Val2", &TPZBndCondT<STATE>::Val2);
 }

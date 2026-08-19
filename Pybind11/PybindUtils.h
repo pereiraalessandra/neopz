@@ -9,11 +9,10 @@
 
 /// @brief Adapts Print(std::ostream&) to a Python string; constness deduced
 template <class T>
-std::string PrintToString(T &obj)
-{
-    std::ostringstream out;
-    obj.Print(out);
-    return out.str();
+std::string PrintToString(T &obj) {
+  std::ostringstream out;
+  obj.Print(out);
+  return out.str();
 }
 
 #endif // PZ_PYBIND_UTILS_H

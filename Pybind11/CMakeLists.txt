@@ -3,6 +3,10 @@ pybind11_add_module(pyneopz
     BindEnums.cpp
     BindGeom.cpp
     BindMaterial.cpp
+    BindMaterialDarcy.cpp
+    BindMaterialElasticity.cpp
+    BindAnalyticSolutionDarcy.cpp
+    BindAnalyticSolutionElasticity.cpp
     BindMesh.cpp
     BindApproxCreator.cpp
     BindAnalysis.cpp
